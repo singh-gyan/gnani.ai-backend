@@ -37,7 +37,6 @@ app.get('/api/', async (req, res) => {
   let data = await model.find({}).sort({ size: -1 }).limit(1);
   res.json(data[0]);
 });
-
 app.post('/api/', async (req, res) => {
   if (req.body.data && typeof req.body === 'object') {
     console.log(req.body.data.length);
