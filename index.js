@@ -2,9 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const mongoose = require('mongoose');
 app.use(cors());
 app.use(express.json());
-const mongoose = require('mongoose');
+const http = require('http');
+const { Server } = require('socket.io');
 const model = require('./model');
 mongoose
   .connect(process.env.DB_CONNECTION, {
@@ -17,10 +19,22 @@ mongoose
   .catch(err => {
     console.error(`Error connecting to the database. \n${err}`);
   });
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.URL,
+    method: ['GET', 'HEAD', 'POST'],
+  },
+});
+
+io.on('connection', socket => {
+  socket.on('send-data', data => {
+    socket.broadcast.emit('recieve-data', data);
+  });
+});
 
 app.get('/api/', async (req, res) => {
   let data = await model.find({}).sort({ size: -1 }).limit(1);
-  console.log(data);
   res.json(data[0]);
 });
 
@@ -52,4 +66,4 @@ app.post('/api/', async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 3000, console.log('Connected'));
+server.listen(process.env.PORT || 3000, console.log('Connected'));
